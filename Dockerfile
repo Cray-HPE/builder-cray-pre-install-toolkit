@@ -1,5 +1,7 @@
 # Copyright 2020-2021 Hewlett Packard Enterprise Development LP
 FROM    arti.dev.cray.com/baseos-docker-master-local/opensuse-leap:15.2
+
+## FIXME: python2 is pulled in as a dependency, but it is blocked in the repo for security reasons
 RUN     zypper in -y \
             checkmedia \
             git \
@@ -9,4 +11,3 @@ RUN     zypper in -y \
             xz
 WORKDIR /
 CMD     ["/bin/bash"]
-
