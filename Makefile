@@ -1,4 +1,4 @@
-NAME ?= build-cray-pre-install-toolkit
+NAME ?= ${GIT_REPO_NAME}
 VERSION ?= $(shell cat .version)
 
 BUILD_DIR ?= $(PWD)
