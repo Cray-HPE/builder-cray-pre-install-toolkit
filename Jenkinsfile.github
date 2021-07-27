@@ -1,5 +1,6 @@
 @Library('csm-shared-library') _
 
+def isStable = env.TAG_NAME != null || env.BRANCH_NAME == 'main' ? true : false
 pipeline {
   agent {
     label "metal-gcp-builder"
@@ -12,8 +13,7 @@ pipeline {
 
   environment {
     DESCRIPTION = "This is a Leap15 based image with KIWI-NG from OpenSUSE."
-    IS_STABLE = getBuildIsStable()
-    VERSION = getDockerBuildVersion(isStable: env.IS_STABLE)
+    VERSION = getDockerBuildVersion(isStable: isStable)
     GIT_REPO_NAME = sh(returnStdout: true, script: "basename -s .git ${GIT_URL}").trim()
     DOCKER_ARGS = getDockerBuildArgs(name: env.GIT_REPO_NAME, description: env.DESCRIPTION)
 
@@ -33,7 +33,7 @@ pipeline {
     stage("Publish") {
       steps {
         script {
-          publishCsmDockerImage(image: env.GIT_REPO_NAME, tag: env.VERSION, isStable: env.IS_STABLE)
+          publishCsmDockerImage(image: env.GIT_REPO_NAME, tag: env.VERSION, isStable: isStable)
         }
       }
     }
