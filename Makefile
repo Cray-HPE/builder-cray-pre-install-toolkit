@@ -1,5 +1,7 @@
 NAME ?= ${GIT_REPO_NAME}
-VERSION ?= $(shell cat .version)
+ifeq ($(VERSION),)
+VERSION := $(shell git describe --tags | tr -s '-' '~' | tr -d '^v')
+endif
 
 BUILD_DIR ?= $(PWD)
 
