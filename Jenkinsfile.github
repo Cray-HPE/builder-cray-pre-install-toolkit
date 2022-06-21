@@ -15,10 +15,9 @@ pipeline {
 
   environment {
     DESCRIPTION = "This is a Leap15 based image with KIWI-NG from OpenSUSE."
-    VERSION = getDockerBuildVersion(isStable: isStable)
-    GIT_REPO_NAME = sh(returnStdout: true, script: "basename -s .git ${GIT_URL}").trim()
     DOCKER_ARGS = getDockerBuildArgs(name: env.GIT_REPO_NAME, description: env.DESCRIPTION)
-
+    GIT_REPO_NAME = sh(returnStdout: true, script: "basename -s .git ${GIT_URL}").trim()
+    VERSION = sh(returnStdout: true, script: "git describe --tags | tr -d '^v'").trim()
   }
 
   stages {
