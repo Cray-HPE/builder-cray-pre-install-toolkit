@@ -1,42 +1,67 @@
+/*
+ *
+ *  MIT License
+ *
+ *  (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP
+ *
+ *  Permission is hereby granted, free of charge, to any person obtaining a
+ *  copy of this software and associated documentation files (the "Software"),
+ *  to deal in the Software without restriction, including without limitation
+ *  the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ *  and/or sell copies of the Software, and to permit persons to whom the
+ *  Software is furnished to do so, subject to the following conditions:
+ *
+ *  The above copyright notice and this permission notice shall be included
+ *  in all copies or substantial portions of the Software.
+ *
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+ *  THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+ *  OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ *  ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+ *  OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
 @Library('csm-shared-library') _
 
 def isStable = env.TAG_NAME != null || env.BRANCH_NAME == 'main' ? true : false
 pipeline {
-  agent {
-    label "metal-gcp-builder"
-  }
-
-  options {
-    buildDiscarder(logRotator(numToKeepStr: "10"))
-    disableConcurrentBuilds()
-    timeout(time: 20, unit: 'MINUTES')
-    timestamps()
-  }
-
-  environment {
-    DESCRIPTION = "This is a Leap15 based image with KIWI-NG from OpenSUSE."
-    DOCKER_ARGS = getDockerBuildArgs(name: env.GIT_REPO_NAME, description: env.DESCRIPTION)
-    GIT_REPO_NAME = sh(returnStdout: true, script: "basename -s .git ${GIT_URL}").trim()
-    VERSION = sh(returnStdout: true, script: "git describe --tags | tr -d '^v'").trim()
-  }
-
-  stages {
-    stage("Build") {
-      parallel {
-        stage('Image') {
-          steps {
-            sh "make image"
-          }
-        }
-      }
+    agent {
+        label "metal-gcp-builder"
     }
 
-    stage("Publish") {
-      steps {
-        script {
-          publishCsmDockerImage(image: env.GIT_REPO_NAME, tag: env.VERSION, isStable: isStable)
-        }
-      }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: "10"))
+        disableConcurrentBuilds()
+        timeout(time: 20, unit: 'MINUTES')
+        timestamps()
     }
-  }
+
+    environment {
+        DESCRIPTION = 'This is a Leap15 based image with KIWI-NG from OpenSUSE.'
+        DOCKER_ARGS = getDockerBuildArgs(name: getRepoName(), description: env.DESCRIPTION)
+        NAME = getRepoName()
+        VERSION = sh(returnStdout: true, script: "git describe --tags | tr -d '^v'").trim()
+    }
+
+    stages {
+        stage('Build: Image') {
+            parallel {
+                stage('Image') {
+                    steps {
+                        sh "make image"
+                    }
+                }
+            }
+        }
+
+        stage('Publish: Image') {
+            steps {
+                script {
+                    publishCsmDockerImage(image: env.NAME, tag: env.VERSION, isStable: isStable)
+                }
+            }
+        }
+    }
 }
